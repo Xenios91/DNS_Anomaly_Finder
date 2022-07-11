@@ -10,5 +10,5 @@
 - Just run pip install -r requirements.txt
 
 ## Utilization
-'''python3 ./dns_anaomaly_finder.py --file=packetCapture.pcap --output=results.csv'''
+```python3 ./dns_anaomaly_finder.py --file=packetCapture.pcap --output=results.csv```
 
