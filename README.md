@@ -11,7 +11,7 @@
 
 ## Utilization
 To run a general check of a pcap file, run the following: 
-```python3 ./dns_anaomaly_finder.py --file=packetCapture.pcap --output=results.csv```
+```python3 ./dns_anomaly_finder.py --file=packetCapture.pcap --output=results.csv```
 
 - Note - output is not a required argument, results will automatically output to a file called results.csv
 
