@@ -15,3 +15,6 @@ To run a general check of a pcap file, run the following:
 
 - Note - output is not a required argument, results will automatically output to a file called results.csv
 
+## Additional Information
+
+- Algorithms utilized: IsolationForest
