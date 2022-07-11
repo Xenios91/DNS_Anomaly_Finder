@@ -17,4 +17,4 @@ To run a general check of a pcap file, run the following:
 
 ## Additional Information
 
-- Algorithms utilized: IsolationForest
+- Algorithms utilized: IsolationForest (Outlier Detection)
