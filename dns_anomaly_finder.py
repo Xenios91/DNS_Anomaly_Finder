@@ -20,7 +20,7 @@ def get_dns_packets(pcap_file: str) -> pd.DataFrame:
                     value = fields.get(field)
                     if isinstance(value, int):
                         dns_attributes[field] = value
-                    if value == None:
+                    if value is None:
                         dns_attributes[field] = 0
                     if field == "qd":
                         dns_attributes["qname"] = value.fields.get(
