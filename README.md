@@ -23,4 +23,4 @@ To run a general check of a pcap file, run the following:
 
 ## Warning
 
-- Machine learning is a memory and CPI intensive task with enough data, this may take a while with a large dataset and if system resources are exhausted, it is recommended to reduce the dataset size.
+- Machine learning is a memory and CPU intensive task with enough data, this may take a while with a large dataset and if system resources are exhausted, it is recommended to reduce the dataset size.
