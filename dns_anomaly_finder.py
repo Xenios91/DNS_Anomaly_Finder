@@ -1,13 +1,15 @@
 import argparse
-from asyncore import write
 
 import pandas as pd
-from scapy.all import *
+from scapy.all import DNS
+from scapy.utils import PcapReader
 from sklearn import preprocessing
 from sklearn.ensemble import IsolationForest
 
 
 def get_dns_packets(pcap_file: str) -> pd.DataFrame:
+    print("Processing packets please wait...")
+
     dns_packets = []
 
     for packet in PcapReader(pcap_file):
@@ -30,8 +32,8 @@ def get_dns_packets(pcap_file: str) -> pd.DataFrame:
 
                 data_frame = pd.DataFrame(dns_attributes, index=[0])
                 dns_packets.append(data_frame)
-        except Exception as e:
-            print(e)
+        except:
+            pass  # dont care, lets skip it
 
     return pd.concat(dns_packets)
 
@@ -41,32 +43,38 @@ def get_args():
         description='Detect anomalous DNS traffic')
     parser.add_argument('--file', required=True, type=str,
                         help='The pcap file to traverse')
-    parser.add_argument('--output', required=False, default="results.csv", type=str,
+    parser.add_argument('--output', required=False, default="results", type=str,
                         help='The name of the results file containing any found anomalous data information')
+    parser.add_argument('--html', required=False, default=False, type=bool, action=argparse.BooleanOptionalAction,
+                        help='Set to have an HTML table produced')
+
     args = parser.parse_args()
     return args
 
 
 def transform_category_values(data_frame: pd.DataFrame) -> pd.DataFrame:
-    label_encoder = preprocessing.LabelEncoder()
+    print("Preparing data for processing, please wait...")
 
-    category_values = data_frame[['qr', 'opcode', 'aa',
-                                  'tc', 'rd', 'ra', 'z', 'ad', 'cd', 'rcode', 'qdcount', 'ancount', 'nscount', 'arcount', 'qtype', 'qclass']]
+    label_encoder = preprocessing.LabelEncoder()
+    category_values = data_frame.loc[:, ['qr', 'opcode', 'aa',
+                                         'tc', 'rd', 'ra', 'z', 'ad', 'cd', 'rcode', 'qdcount', 'ancount', 'nscount', 'arcount', 'qtype', 'qclass']]
     for (column_name, column) in category_values.iteritems():
-        category_values[column_name] = label_encoder.fit_transform(
+        category_values.loc[:, column_name] = label_encoder.fit_transform(
             column.values)
 
     label_encoder.fit(data_frame["qname"])
-    category_values["qname"] = label_encoder.transform(
+    category_values.loc[:, "qname"] = label_encoder.transform(
         data_frame["qname"])
 
     return category_values, label_encoder
 
 
 def run_isolation_forest(data_frame: pd.DataFrame) -> pd.DataFrame:
+    print("Looking for outliers, please wait...")
+
     clf = IsolationForest().fit(data_frame)
     predictions = clf.predict(data_frame)
-    data_frame["prediction"] = predictions
+    data_frame.loc[:, "prediction"] = predictions
     return data_frame
 
 
@@ -86,26 +94,30 @@ def print_logo():
     print(logo)
 
 
-def write_results(data_frame: pd.DataFrame, label_encoder, file_name: str, ):
+def write_results(data_frame: pd.DataFrame, label_encoder, file_name: str, to_html: bool):
     results = data_frame[data_frame.prediction > -1]
     qname_values = results["qname"]
 
     final_df = pd.DataFrame(results["id"])
     final_df["qname"] = label_encoder.inverse_transform(qname_values)
-    final_df.to_csv(file_name, index=False)
+    if to_html:
+        final_df.to_html(f"{file_name}.html", index=False)
+    else:
+        final_df.to_csv(f"{file_name}.csv", index=False)
 
 
 def main():
     print_logo()
     args = get_args()
     dns_packets_data_frame = get_dns_packets(args.file)
-    transformed_category_df, label_encoder = transform_category_values(
+    transformed_dns_data_frame, label_encoder = transform_category_values(
         dns_packets_data_frame)
-    results = run_isolation_forest(transformed_category_df)
+    results = run_isolation_forest(transformed_dns_data_frame)
     total_anomalies = results[results.prediction > -1].count()["prediction"]
+    print(f"{dns_packets_data_frame.size} total DNS packets processed...")
     print(f"{total_anomalies} anomalies were found!")
-    results['id'] = dns_packets_data_frame['id']
-    write_results(results, label_encoder, args.output)
+    results.loc[:, 'id'] = dns_packets_data_frame['id']
+    write_results(results, label_encoder, args.output, args.html)
     print(f"Results printed to {args.output}")
 
 
