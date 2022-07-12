@@ -3,7 +3,7 @@
 ## General Information
 - Author: Corey Hartman
 - Language: Python 3.10
-- Description: An ML tool for performing anomaly detection in DNS requests
+- Description: An ML tool for performing anomaly detection on DNS requests
 
 ## Installation/Compilation
 - Requires Python 3.10
