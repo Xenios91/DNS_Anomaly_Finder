@@ -1,5 +1,4 @@
 import argparse
-from multiprocessing.sharedctypes import Value
 
 import pandas as pd
 from scapy.all import DNS
