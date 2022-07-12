@@ -1,4 +1,5 @@
 import argparse
+from multiprocessing.sharedctypes import Value
 
 import pandas as pd
 from scapy.all import DNS
@@ -38,6 +39,15 @@ def get_dns_packets(pcap_file: str) -> pd.DataFrame:
     return pd.concat(dns_packets)
 
 
+def check_args(args):
+    contamination = args.contamination
+
+    if contamination is not None:
+        if contamination <= 0 or contamination >= 1.0:
+            raise ValueError(
+                "Invalid contamination value, must be greater than 0 and less than 1.0")
+
+
 def get_args():
     parser = argparse.ArgumentParser(
         description='Detect anomalous DNS traffic')
@@ -47,8 +57,14 @@ def get_args():
                         help='The name of the results file containing any found anomalous data information')
     parser.add_argument('--html', required=False, default=False, type=bool, action=argparse.BooleanOptionalAction,
                         help='Set to have an HTML table produced')
+    parser.add_argument('--contamination', required=False, default=None, type=float,
+                        help='The amount of contamination of the data set, i.e. the proportion of outliers in the data set.')
+    parser.add_argument('--threads', required=False, default=1, type=int,
+                        help='The amount of threads to use, set to -1 for all available.')
 
     args = parser.parse_args()
+    check_args(args)
+
     return args
 
 
@@ -69,10 +85,14 @@ def transform_category_values(data_frame: pd.DataFrame) -> pd.DataFrame:
     return category_values, label_encoder
 
 
-def run_isolation_forest(data_frame: pd.DataFrame) -> pd.DataFrame:
+def run_isolation_forest(data_frame: pd.DataFrame, contamination: float, threads: int) -> pd.DataFrame:
     print("Looking for outliers, please wait...")
 
-    clf = IsolationForest().fit(data_frame)
+    if contamination is None:
+        clf = IsolationForest().fit(data_frame)
+    else:
+        clf = IsolationForest(
+            n_jobs=threads, contamination=contamination).fit(data_frame)
     predictions = clf.predict(data_frame)
     data_frame.loc[:, "prediction"] = predictions
     return data_frame
@@ -112,7 +132,8 @@ def main():
     dns_packets_data_frame = get_dns_packets(args.file)
     transformed_dns_data_frame, label_encoder = transform_category_values(
         dns_packets_data_frame)
-    results = run_isolation_forest(transformed_dns_data_frame)
+    results = run_isolation_forest(
+        transformed_dns_data_frame, args.contamination, args.threads)
     total_anomalies = results[results.prediction > -1].count()["prediction"]
     print(f"{dns_packets_data_frame.size} total DNS packets processed...")
     print(f"{total_anomalies} anomalies were found!")
