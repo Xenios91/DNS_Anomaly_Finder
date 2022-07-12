@@ -15,7 +15,7 @@ To run a general check of a pcap file, run the following:
 
 #### Notes
 - The ```--output``` argument is not required, results will automatically output to a file called results.csv
-- The ```--html``` flag is not required, if set, the ouytput will be an html table instead of a CSV file.
+- The ```--html``` flag is not required, if set, the output will be an html table instead of a CSV file.
 
 ## Additional Information
 
