@@ -16,6 +16,8 @@ To run a general check of a pcap file, run the following:
 #### Notes
 - The ```--output``` argument is not required, results will automatically output to a file called results.csv
 - The ```--html``` flag is not required, if set, the output will be an html table instead of a CSV file.
+- The ```--threads``` argument is not required, the number of threads defaults to 1.
+- The ```--contamination``` argument is not required, it will automatically set to a value deemed fit by the algorithm.
 
 ## Additional Information
 
